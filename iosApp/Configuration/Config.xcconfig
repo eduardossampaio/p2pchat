@@ -1,0 +1,7 @@
+TEAM_ID=
+
+PRODUCT_NAME=Peer to peer chat
+PRODUCT_BUNDLE_IDENTIFIER=com.apps.esampaio.p2pchat.Peertopeerchat$(TEAM_ID)
+
+CURRENT_PROJECT_VERSION=1
+MARKETING_VERSION=1.0
