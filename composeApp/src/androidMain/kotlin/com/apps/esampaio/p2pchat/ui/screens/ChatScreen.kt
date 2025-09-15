@@ -95,7 +95,7 @@ fun ChatScreen(
                             )
                             inputText = ""
 
-                            
+
                             coroutineScope.launch {
                                 listState.animateScrollToItem(messages.size - 1)
                             }

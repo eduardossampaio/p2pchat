@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -30,6 +31,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(projects.shared)
+            implementation(libs.androidx.lifecycle.viewmodel.ktx)
             implementation("androidx.navigation:navigation-compose:2.9.4")
             implementation("io.coil-kt:coil-compose:2.5.0")
         }
@@ -67,6 +69,10 @@ android {
 }
 
 dependencies {
+    implementation(projects.shared)
+    implementation(libs.koin.android)
+    implementation(libs.koin.compose)
+    implementation(libs.koin.composeVM)
     debugImplementation(compose.uiTooling)
 }
 

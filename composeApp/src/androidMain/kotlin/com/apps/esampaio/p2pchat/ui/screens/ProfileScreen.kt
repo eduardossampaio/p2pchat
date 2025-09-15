@@ -25,6 +25,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,19 +43,40 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.apps.esampaio.p2pchat.R
 import com.apps.esampaio.p2pchat.core.model.User
+import com.apps.esampaio.p2pchat.core.viewModels.impl.SetupProfileViewModel
+import com.apps.esampaio.p2pchat.core.viewModels.impl.SetupProfileViewModelState
+import org.koin.compose.viewmodel.koinViewModel
 
 
 @Composable
 fun ProfileScreen(onCreateProfile: (user: User) -> Unit){
+
+    val viewModel = koinViewModel<SetupProfileViewModel>()
+    val state = viewModel.state.collectAsState()
+
+    state.value.let { value ->
+        if (value is SetupProfileViewModelState.UserCreated) {
+            val user = value.user
+            LaunchedEffect(Unit) {
+                onCreateProfile.invoke(user)
+            }
+        }
+    }
+
     Scaffold { innerPadding ->
         Surface(modifier = Modifier.padding(innerPadding)) {
-            ProfileCreationScreen(onCreateProfile)
+            ProfileCreationScreen(state.value){ userName, profilePicture ->
+                viewModel.createUser(User(userName,profilePicture))
+            }
         }
     }
 }
 
 @Composable
-fun ProfileCreationScreen(onCreateProfile: (user: User) -> Unit){
+fun ProfileCreationScreen(
+    state: SetupProfileViewModelState,
+    onCreateProfile: (userName: String, profilePicture:String?) -> Unit
+){
 
     var username by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
@@ -65,6 +89,9 @@ fun ProfileCreationScreen(onCreateProfile: (user: User) -> Unit){
         }
     )
 
+    if(state is SetupProfileViewModelState.UserCreated){
+        onCreateProfile.invoke(username,imageUri?.toString())
+    }
 
     Column(
         modifier = Modifier
@@ -109,8 +136,7 @@ fun ProfileCreationScreen(onCreateProfile: (user: User) -> Unit){
         Button(
             enabled = username.length >= 3,
             onClick = {
-                //mudar depois
-                onCreateProfile.invoke(User(username,imageUri?.toString()))
+                onCreateProfile.invoke(username,imageUri?.toString())
             },
             modifier = Modifier
                 .fillMaxWidth()
