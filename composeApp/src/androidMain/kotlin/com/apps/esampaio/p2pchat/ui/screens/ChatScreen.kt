@@ -22,44 +22,60 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.apps.esampaio.p2pchat.core.model.Author
+import com.apps.esampaio.p2pchat.core.model.Chat
 import com.apps.esampaio.p2pchat.core.model.Message
+import com.apps.esampaio.p2pchat.core.viewModels.impl.ChatViewModel
+import com.apps.esampaio.p2pchat.core.viewModels.impl.ChatViewModelState
+import com.apps.esampaio.p2pchat.core.viewModels.impl.SetupProfileViewModel
 import kotlinx.coroutines.launch
-
+import org.koin.compose.viewmodel.koinViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(
-    userName: String,
-    userIp: String,
+fun ChatScreen(chat: Chat, onNavigateBack: () -> Unit) {
+    val viewModel = koinViewModel<ChatViewModel>()
+    val state = viewModel.state.collectAsState()
+
+    //startup
+    LaunchedEffect(Unit) {
+        viewModel.start(chat)
+    }
+
+    ChatScreenContent(
+        state.value,
+        chat,
+        onNewMessage = {
+            viewModel.sendMessage(it)
+        },
+        onNavigateBack = {
+
+        })
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChatScreenContent(
+    state: ChatViewModelState,
+    chat: Chat,
+    onNewMessage: (String) -> Unit = {},
     onNavigateBack: () -> Unit
 ) {
 
-    val messages = remember {
-        mutableStateListOf(
-            Message(1, "Olá! Tudo bem?", Author.OTHER, "16:00"),
-            Message(2, "Tudo ótimo, e com você?", Author.ME, "16:01"),
-            Message(3, "Estou bem também. O que está fazendo?", Author.OTHER, "16:01"),
-            Message(4, "Estudando Jetpack Compose. É incrível!", Author.ME, "16:02"),
-            Message(5, "Que legal! Também quero aprender.", Author.OTHER, "16:03")
-        )
-    }
+
+    var messages = remember { mutableStateListOf<Message>() }
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
 
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.size - 1)
-        }
-    }
+
 
     Scaffold(
         topBar = {
             ChatTopBar(
-                userName = userName,
-                userIp = userIp,
+                userName = chat.userName,
+                userIp = "192.168.1.1",
                 onNavigateBack = onNavigateBack
             )
         },
@@ -70,6 +86,34 @@ fun ChatScreen(
                     .padding(paddingValues)
             ) {
 
+                when (state) {
+                    ChatViewModelState.Loading -> {
+
+                    }
+
+                    is ChatViewModelState.MessagesLoaded -> {
+                        if(messages.isEmpty()) {
+                            messages.addAll(state.messages.toMutableList())
+                        }
+
+
+                        LaunchedEffect(messages.size) {
+                            if (messages.isNotEmpty()) {
+                                listState.animateScrollToItem(messages.size - 1)
+                            }
+                        }
+                    }
+
+                    is ChatViewModelState.OnNewMessage -> {
+                        if(!messages.contains(state.newMessage)) {
+                            messages.add(state.newMessage)
+                            LaunchedEffect(state.newMessage) {
+                                listState.animateScrollToItem(messages.size - 1)
+                            }
+                        }
+                    }
+                }
+
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
@@ -78,31 +122,26 @@ fun ChatScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(vertical = 16.dp)
                 ) {
-                    items(messages, key = { it.id }) { message ->
+                    items(messages,
+//                        key = { it.id }
+                    ) { message ->
                         MessageBubble(message = message)
                     }
                 }
-
 
                 ChatInput(
                     text = inputText,
                     onTextChange = { inputText = it },
                     onSendClick = {
                         if (inputText.isNotBlank()) {
-                            val newId = (messages.lastOrNull()?.id ?: 0) + 1
-                            messages.add(
-                                Message(newId, inputText, Author.ME, "16:05") // Timestamp dinâmico seria ideal
-                            )
+                            onNewMessage.invoke(inputText)
                             inputText = ""
-
-
-                            coroutineScope.launch {
-                                listState.animateScrollToItem(messages.size - 1)
-                            }
                         }
                     }
                 )
             }
+
+
         }
     )
 }
@@ -134,7 +173,8 @@ fun ChatTopBar(userName: String, userIp: String, onNavigateBack: () -> Unit) {
 fun MessageBubble(message: Message) {
     val isFromMe = message.author == Author.ME
     val alignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
-    val bubbleColor = if (isFromMe) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
+    val bubbleColor =
+        if (isFromMe) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
     val bubbleShape = if (isFromMe) {
         RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
     } else {
@@ -150,7 +190,7 @@ fun MessageBubble(message: Message) {
                 .clip(bubbleShape)
                 .background(bubbleColor)
                 .padding(horizontal = 16.dp, vertical = 10.dp),
-            horizontalAlignment = if(isFromMe) Alignment.End else Alignment.Start
+            horizontalAlignment = if (isFromMe) Alignment.End else Alignment.Start
         ) {
             Text(text = message.text)
             Text(
@@ -207,8 +247,33 @@ fun ChatInput(
 
 @Preview(showBackground = true)
 @Composable
-fun ChatScreenPreview() {
+fun ChatScreenPreviewLoading() {
     MaterialTheme {
-        ChatScreen(userName = "Alice", userIp = "192.168.0.10", onNavigateBack = {})
+        ChatScreenContent(
+            state = ChatViewModelState.Loading,
+            chat = Chat(1, "Aline", "Olá, tudo bem?", "https://i.pravatar.cc/150?img=1"),
+            onNavigateBack = {}
+        )
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun ChatScreenPreviewMessages() {
+    MaterialTheme {
+        ChatScreenContent(
+            state = ChatViewModelState.MessagesLoaded(
+                listOf(
+                    Message(1, "Olá! Tudo bem?", Author.OTHER, "16:00"),
+                    Message(2, "Tudo ótimo, e com você?", Author.ME, "16:01"),
+                    Message(3, "Estou bem também. O que está fazendo?", Author.OTHER, "16:01"),
+                    Message(4, "Estudando Jetpack Compose. É incrível!", Author.ME, "16:02"),
+                    Message(5, "Que legal! Também quero aprender.", Author.OTHER, "16:03")
+                )
+            ),
+            chat = Chat(1, "Aline", "Olá, tudo bem?", "https://i.pravatar.cc/150?img=1"),
+            onNavigateBack = {}
+        )
+    }
+}
+

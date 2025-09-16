@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 sealed class ChatListScreenViewModelState{
-    object Loading : ChatListScreenViewModelState()
+    object Loading: ChatListScreenViewModelState()
     object NoChatsFound: ChatListScreenViewModelState()
     data class ChatsFound(val chats: List<Chat>): ChatListScreenViewModelState()
 }
