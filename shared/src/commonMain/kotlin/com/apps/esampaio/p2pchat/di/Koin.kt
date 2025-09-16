@@ -1,6 +1,8 @@
 package com.apps.esampaio.p2pchat.di
 
+import com.apps.esampaio.p2pchat.core.repository.ChatRepository
 import com.apps.esampaio.p2pchat.core.repository.UserRepository
+import com.apps.esampaio.p2pchat.core.services.ChatService
 import com.apps.esampaio.p2pchat.core.useCases.CreateUserUseCase
 import com.apps.esampaio.p2pchat.core.useCases.GetCurrentUserUseCase
 import org.koin.core.context.startKoin
@@ -13,7 +15,8 @@ fun initKoin(config: KoinAppDeclaration? = null) =
         config?.invoke(this)
         modules(
             useCasesModule,
-            repositoriesModule
+            repositoriesModule,
+            servicesModule
 
         )
     }
@@ -25,5 +28,11 @@ val useCasesModule: Module = module {
 
 val repositoriesModule : Module = module {
     single<UserRepository>{UserRepository(get())}
+    single<ChatRepository>{ChatRepository()}
+
+}
+
+val servicesModule = module {
+    single<ChatService>{ChatService()}
 
 }

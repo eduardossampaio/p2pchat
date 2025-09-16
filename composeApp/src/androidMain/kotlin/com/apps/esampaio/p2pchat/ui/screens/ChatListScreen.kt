@@ -109,7 +109,7 @@ fun ChatListScreenContent(
                     }
                 }
 
-                ChatListScreenViewModelState.Loading -> {
+                ChatListScreenViewModelState.Loading, ChatListScreenViewModelState.Connecting -> {
                     Column(modifier = Modifier.fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center) {
@@ -124,8 +124,11 @@ fun ChatListScreenContent(
                       Text("No chats found")
                     }
                 }
+                is ChatListScreenViewModelState.Connected -> {
+                    onChatClick.invoke(state.chat)
 
-        }
+                }
+            }
     }
 }
 

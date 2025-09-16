@@ -26,6 +26,7 @@ kotlin {
     sourceSets {
 
         commonMain.dependencies {
+            implementation("com.piasy:kmp-socketio:1.3.3")
             api(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.composeVM)
