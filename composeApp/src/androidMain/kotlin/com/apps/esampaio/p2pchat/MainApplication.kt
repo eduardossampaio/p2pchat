@@ -3,6 +3,7 @@ package com.apps.esampaio.p2pchat
 import android.app.Application
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import com.apps.esampaio.p2pchat.core.platform_spefics.Preferences
 import com.apps.esampaio.p2pchat.core.viewModels.impl.ChatListScreenViewModel
 import com.apps.esampaio.p2pchat.core.viewModels.impl.ChatViewModel
 import com.apps.esampaio.p2pchat.core.viewModels.impl.SetupProfileViewModel
@@ -23,7 +24,8 @@ class MainApplication : Application() {
             androidLogger(if (isDebug()) Level.ERROR else Level.NONE)
             androidContext(this@MainApplication)
             modules(
-                viewModelModule
+                viewModelModule,
+                platformModule
             )
         }
     }
@@ -32,5 +34,10 @@ class MainApplication : Application() {
         viewModelOf(::SetupProfileViewModel)
         viewModelOf(::ChatListScreenViewModel)
         viewModelOf(::ChatViewModel)
+    }
+
+    val platformModule = module {
+        single<Preferences> { Preferences(get()) }
+
     }
 }
