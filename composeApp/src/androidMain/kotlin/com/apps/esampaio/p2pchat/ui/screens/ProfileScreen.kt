@@ -54,6 +54,11 @@ fun ProfileScreen(onCreateProfile: (user: User) -> Unit){
     val viewModel = koinViewModel<SetupProfileViewModel>()
     val state = viewModel.state.collectAsState()
 
+    //startup
+    LaunchedEffect(Unit){
+        viewModel.start()
+    }
+
     state.value.let { value ->
         if (value is SetupProfileViewModelState.UserCreated) {
             val user = value.user

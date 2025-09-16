@@ -10,8 +10,7 @@ sealed class SetupProfileViewModelState{
     object UserNotFound: SetupProfileViewModelState()
 }
 class SetupProfileViewModel : BaseViewModel() {
-    val state =
-        MutableStateFlow<SetupProfileViewModelState>(SetupProfileViewModelState.UserNotFound)
+    val state = MutableStateFlow<SetupProfileViewModelState>(SetupProfileViewModelState.UserNotFound)
 
     fun start(){
         //TODO load user from storage

@@ -3,6 +3,7 @@ package com.apps.esampaio.p2pchat
 import android.app.Application
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import com.apps.esampaio.p2pchat.core.viewModels.impl.ChatListScreenViewModel
 import com.apps.esampaio.p2pchat.core.viewModels.impl.SetupProfileViewModel
 import com.apps.esampaio.p2pchat.di.initKoin
 import org.koin.android.ext.koin.androidContext
@@ -28,5 +29,6 @@ class MainApplication : Application() {
 
     val viewModelModule = module {
         viewModelOf(::SetupProfileViewModel)
+        viewModelOf(::ChatListScreenViewModel)
     }
 }

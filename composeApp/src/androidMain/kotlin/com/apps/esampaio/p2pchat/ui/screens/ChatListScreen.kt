@@ -23,25 +23,39 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.apps.esampaio.p2pchat.core.model.Chat
+import com.apps.esampaio.p2pchat.core.viewModels.impl.ChatListScreenViewModel
+import com.apps.esampaio.p2pchat.core.viewModels.impl.ChatListScreenViewModelState
+import org.koin.compose.viewmodel.koinViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatListScreen(onChatClick: (Chat) -> Unit) {
+    val viewModel = koinViewModel<ChatListScreenViewModel>()
+    val state = viewModel.state.collectAsState()
+
+    //startup
+    LaunchedEffect(Unit){
+        viewModel.start()
+    }
+
+    ChatListScreenContent(state.value, onNewChatClick = { ip ->
+        viewModel.startNewChat(ip)
+    }, onChatClick)
+
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChatListScreenContent(
+    state: ChatListScreenViewModelState,
+    onNewChatClick: (ip: String) -> Unit,
+    onChatClick: (Chat) -> Unit) {
+
+
 
     var showDialog by remember { mutableStateOf(false) }
-
-
-    val chatList = remember {
-        listOf(
-            Chat(1, "Alice", "Hey, how are you?", "https://i.pravatar.cc/150?img=1"),
-            Chat(2, "Bob", "Let's catch up tomorrow.", "https://i.pravatar.cc/150?img=2"),
-            Chat(3, "Charlie", "Can you send me the file?", "https://i.pravatar.cc/150?img=3"),
-            Chat(4, "Diana", "Just saw your message!", "https://i.pravatar.cc/150?img=4"),
-            Chat(5, "Evan", "Thanks for the help.", "https://i.pravatar.cc/150?img=5"),
-            Chat(6, "Fiona", "See you at the meeting.", "https://i.pravatar.cc/150?img=6")
-        )
-    }
 
 
     Scaffold(
@@ -55,6 +69,9 @@ fun ChatListScreen(onChatClick: (Chat) -> Unit) {
             )
         },
         floatingActionButton = {
+            if(state is ChatListScreenViewModelState.Loading){
+                return@Scaffold
+            }
             FloatingActionButton(onClick = { showDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add new chat")
             }
@@ -68,24 +85,46 @@ fun ChatListScreen(onChatClick: (Chat) -> Unit) {
                     // TODO: Lógica para conectar com o IP informado
                     println("Connecting to IP: $ipAddress")
                     showDialog = false
+                    onNewChatClick.invoke(ipAddress)
                 }
             )
         }
 
+            when (state) {
+                is ChatListScreenViewModelState.ChatsFound -> {
+                    val chatList = state.chats
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                    ) {
+                        items(chatList) { chat ->
+                            ChatListItem(chat = chat, onClick = {
+                                // TODO: Lógica para abrir a tela de conversa específica
+                                println("Clicked on chat with ${chat.userName}")
+                                onChatClick.invoke(chat)
+                            })
+                            HorizontalDivider(color = Color.LightGray, thickness = 0.5.dp)
+                        }
+                    }
+                }
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            items(chatList) { chat ->
-                ChatListItem(chat = chat, onClick = {
-                    // TODO: Lógica para abrir a tela de conversa específica
-                    println("Clicked on chat with ${chat.userName}")
-                    onChatClick.invoke(chat)
-                })
-                HorizontalDivider(color = Color.LightGray, thickness = 0.5.dp)
-            }
+                ChatListScreenViewModelState.Loading -> {
+                    Column(modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                ChatListScreenViewModelState.NoChatsFound -> {
+                    Column(modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center) {
+                      Text("No chats found")
+                    }
+                }
+
         }
     }
 }
@@ -165,7 +204,15 @@ fun AddChatDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
 @Composable
 @Preview
 private fun ChatListScreenPreview() {
-    ChatListScreen(){
+    ChatListScreenContent(ChatListScreenViewModelState.Loading, {},{
 
-    }
+    })
+}
+
+@Composable
+@Preview
+private fun EmptyChatListScreenPreview() {
+    ChatListScreenContent(ChatListScreenViewModelState.NoChatsFound, {},{
+
+    })
 }
